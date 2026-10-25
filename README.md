@@ -3,6 +3,8 @@
 > **非官方移植**：本项目是 [QQ-bot](https://github.com/ezoiLZH/QQ-bot) 的 [DeepSeek Harness](https://dsh.deepseek.com) 插件版。
 > 原项目作者 **[ezoiLZH](https://github.com/ezoiLZH)** —— 人设协议、表情包机制、消息聚合、SKIP/LEAVE 冷却、群内指令等设计全部来自原项目，特此致谢。
 > 如果原作者希望调整署名或撤下本项目，开个 issue 即可，我会立刻处理。
+>
+> 仓库：https://github.com/wufa-anon/dsh-qq-bot · 下载：https://github.com/wufa-anon/dsh-qq-bot/releases
 
 把 QQ 变成 DeepSeek Harness 的聊天入口：OneBot v11（NapCat）收消息，Harness 的模型回消息。
 **macOS 与 Windows 都能开箱即用**——装好插件，在界面里点几下就能跑起来，不需要命令行、不需要 clone 任何仓库。

@@ -24,12 +24,12 @@ dsh plugin --profile desktop add /路径/到/dsh-qq-bot-1.1.0.tgz
 
 每个版本一个 Release 附件，对方下载 tgz 再用方式一安装。
 
-1. 在 GitHub 新建一个空仓库，例如 `dsh-qq-bot`（不要勾选 README）。
+1. 在 GitHub 新建一个空仓库：https://github.com/new → 名字 `dsh-qq-bot` → Public → **不要**勾选 README / .gitignore / license。
 2. 本目录已经是 git 仓库，直接推：
 
    ```bash
    cd dsh-plugin
-   git remote add origin git@github.com:<你的账号>/dsh-qq-bot.git
+   git remote add origin git@github.com:wufa-anon/dsh-qq-bot.git
    git branch -M main
    git push -u origin main
    ```
@@ -43,18 +43,18 @@ dsh plugin --profile desktop add /路径/到/dsh-qq-bot-1.1.0.tgz
 
    然后在 GitHub 页面 **Releases → Draft a new release** 选 `v1.1.0`，把 `dist/dsh-qq-bot-1.1.0.tgz` 拖进附件，发布。
    附件链接大致是：
-   `https://github.com/<账号>/dsh-qq-bot/releases/download/v1.1.0/dsh-qq-bot-1.1.0.tgz`
+   `https://github.com/wufa-anon/dsh-qq-bot/releases/download/v1.1.0/dsh-qq-bot-1.1.0.tgz`
 
 4. 对方就可以一句话安装（`dsh plugin add` 支持 http(s) URL）：
 
    ```bash
-   dsh plugin --profile desktop add https://github.com/<账号>/dsh-qq-bot/releases/download/v1.1.0/dsh-qq-bot-1.1.0.tgz
+   dsh plugin --profile desktop add https://github.com/wufa-anon/dsh-qq-bot/releases/download/v1.1.0/dsh-qq-bot-1.1.0.tgz
    ```
 
 也可以直接装仓库本身（对方需要 git）：
 
 ```bash
-dsh plugin --profile desktop add git+https://github.com/<账号>/dsh-qq-bot.git
+dsh plugin --profile desktop add git+https://github.com/wufa-anon/dsh-qq-bot.git
 ```
 
 > 注意：仓库根目录就是插件包（有 `package.json`、`lib/`、`cordis.patch.yml`），不要在子目录里。

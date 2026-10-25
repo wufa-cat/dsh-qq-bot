@@ -1,5 +1,7 @@
 # dsh-qq-bot v1.1.0
 
+仓库：https://github.com/wufa-anon/dsh-qq-bot
+
 把 QQ 接入 [DeepSeek Harness](https://dsh.deepseek.com) 的插件，**macOS 与 Windows 开箱即用**：装好插件，在界面里点几下就能跑起来，不需要 clone 仓库、不需要写 YAML。
 
 > 本项目是 [QQ-bot](https://github.com/ezoiLZH/QQ-bot) 的**非官方**移植版，感谢原作者 [ezoiLZH](https://github.com/ezoiLZH) 的设计：人设协议、表情包、消息聚合、SKIP/LEAVE 冷却与群内指令都源自原项目。
@@ -9,7 +11,7 @@
 ```bash
 dsh plugin --profile desktop add ./dsh-qq-bot-1.1.0.tgz
 # 或
-dsh plugin --profile desktop add https://github.com/<账号>/dsh-qq-bot/releases/download/v1.1.0/dsh-qq-bot-1.1.0.tgz
+dsh plugin --profile desktop add https://github.com/wufa-anon/dsh-qq-bot/releases/download/v1.1.0/dsh-qq-bot-1.1.0.tgz
 ```
 
 装完完全退出并重启 Harness。
