@@ -61,8 +61,10 @@
 需要已安装 DeepSeek Harness（桌面版或 Web 版）。
 
 ```bash
-# 从 tarball / 目录安装（推荐分享这种方式）
-dsh plugin --profile desktop add ./dsh-qq-bot-1.2.0.tgz
+# 直接从 GitHub Release 装（推荐）
+dsh plugin --profile desktop add https://github.com/wufa-cat/dsh-qq-bot/releases/download/v1.2.1/dsh-qq-bot-1.2.1.tgz
+# 或者用本地下发的 tarball / 目录
+dsh plugin --profile desktop add ./dsh-qq-bot-1.2.1.tgz
 # 或者直接用目录
 dsh plugin --profile desktop add /path/to/dsh-plugin
 # 发布到 npm 之后也可以
@@ -170,7 +172,30 @@ stickers/
 ⚠️ 聊天模型如果走别的 provider（例如 SiliconFlow），搜索仍需要**单独的 DeepSeek 凭据**，否则报 401。插件界面的状态卡会直接给出这条提示。
 💰 Messages 模式搜索 = 一次完整模型调用（60s 超时、最多 5 次），开之前先想清楚值不值。
 
-## 七、对话巡检与状态灯
+## 七、谁可以调用功能（权限）
+
+`bots[].access` 管「有副作用或花钱」的动作：`/画`、`/语音`、`/收图`、`/搜索`、`/ai`、`/clear`、`/reload`，以及模型自主生成的 `[画图:…]` / `[语音:…]`。
+
+```yaml
+access:
+  mode: admin              # all 全员 | admin 仅管理员 | list 仅白名单
+  users: ["10001"]         # mode=list 白名单 QQ
+  groups: ["123456789"]    # mode=list 白名单群（群里任何人都算）
+  denyUsers: []            # 黑名单永远优先
+  denyGroups: []
+```
+
+判定顺序：**黑名单 → 管理员 → mode**。管理员始终可以，但被拉黑就不行。
+`/ai`、`/clear`、`/reload` 属于管理操作，**始终**只给管理员，不受 `mode` 影响。
+模型自主生成媒体时，按「触发这一轮的人」判权限；没权限时标记会被抹掉，不会原样发出去。
+
+## 八、模型自动检索
+
+机器人卡片「模型来源（只用于拉取列表）」：填上游 OpenAI 兼容地址（到 `/v1`）+ key → **拉取模型** → 下拉选一个 → 填进「模型」。
+「多模态」卡片的 ASR / TTS / 生图也各有一个「拉取模型」按钮。
+它只查模型 id，对话调用仍走 DSH 的 provider/model。
+
+## 九、对话巡检与状态灯
 
 插件页顶部「运行状态」：
 
@@ -185,7 +210,7 @@ stickers/
 
 事件只存在内存环形缓冲（400 条），重启清空；聊天记录本体仍在 `data/`。
 
-## 八、关键词规则
+## 十、关键词规则
 
 命中关键词直接回复，**不进模型**：快、省钱、不受上下文影响。
 
@@ -201,7 +226,7 @@ rules:
 - `reply` 支持 `{user}`（昵称）、`{qq}`、`{bot}`；
 - 规则优先于模型，但**指令优先于规则**（`/ping` 不会被规则抢走）。
 
-## 九、定时消息
+## 十一、定时消息
 
 ```yaml
 schedules:
@@ -218,12 +243,12 @@ schedules:
 - `{date}` `{time}` `{weekday}` 会替换；
 - 机器人不在线就跳过并记日志（不会补发）。
 
-## 十、长期记忆
+## 十二、长期记忆
 
 「长期记忆」卡片直接编辑 `data/memory-<chat>.json`：一行一条，保存时自动补日期。
 新会话建立（种子）时会把这些摘要注入提示词；也可以整份删除。
 
-## 十一、语音转文字 / 语音合成 / 生图
+## 十三、语音转文字 / 语音合成 / 生图
 
 「多模态」卡片，三套端点各自填 **baseURL + API Key + 模型**（OpenAI 兼容）：
 
@@ -238,7 +263,7 @@ schedules:
 - 没启用/没配 key：`[语音]` 保留占位，`/画` `/语音` 直接报错，不静默失败；
 - 结果以 base64 内联发 NapCat，容器里也能发。
 
-## 十二、群内指令
+## 十四、群内指令
 
 | 指令 | 说明 |
 | --- | --- |
@@ -253,11 +278,11 @@ schedules:
 | `/ai on\|off\|status` | 开关 AI 回复 |
 | `/收图 [分类]` | 把图片收进表情包（管理员；可带图发或回复图片） |
 | `/搜索 [on\|off]` | 联网搜索开关（管理员） |
-| `/画 描述` | 生图（需配置 `media.image`） |
-| `/语音 文本` | 合成语音（需配置 `media.tts`） |
+| `/画 描述` | 生图（需配置 `media.image`；受 `access` 限制） |
+| `/语音 文本` | 合成语音（需配置 `media.tts`；受 `access` 限制） |
 | `/reload` | 重读人设与表情包（管理员） |
 
-## 十三、目录与清理
+## 十五、目录与清理
 
 「目录与清理」卡片：
 
@@ -266,7 +291,7 @@ schedules:
 - **删除虚拟机**：仅 macOS + colima 可用，回收约 3.5 GB，下次启动会重建并重新拉镜像；
   Windows 上引擎在 WSL2 里，插件**不会**动它（要彻底重置用 Docker Desktop → Troubleshoot → Reset）。
 
-## 十四、配置项（`cordis.patch.yml`）
+## 十六、配置项（`cordis.patch.yml`）
 
 界面保存的就是这些；一般不用手写。所有字段都有默认值，最小配置只需要 `bots`：
 
@@ -286,6 +311,8 @@ schedules:
         # model: deepseek-ai/DeepSeek-V4.1-Flash
         timeout: 180
         tools: { webSearch: false, webFetch: false }   # 聊天档工具白名单
+        access: { mode: admin, users: [], groups: [], denyUsers: [], denyGroups: [] }
+        modelSource: { baseURL: "", apiKey: "" }       # 只用于界面「拉取模型」
     rules: []                # 关键词规则
     schedules: []            # 定时消息
     media:                   # ASR / TTS / 生图（用你自己的 key）
@@ -313,7 +340,7 @@ schedules:
 
 `provider/model` 缺省时使用 DSH 全局默认模型；指定时使用该 provider（须已在 DSH 设置里配好）。
 
-## 十五、界面背后的接口
+## 十七、界面背后的接口
 
 界面按钮打到 Harness 自带 web 服务器的两个前缀（不额外开端口）：
 
@@ -322,8 +349,9 @@ schedules:
 - `/qqbot-status`：状态灯数据（连接/计数/工具策略/搜索可用性）
 - `/qqbot-inspect`：巡检事件
 - `/qqbot-runtime/{search,ai}`：运行时开关（不改配置文件，重载后回到配置值）
+- `/qqbot-runtime/models`：`POST {baseURL, apiKey|apiKeyEnv}` → 上游模型 id 列表（界面「拉取模型」）
 
-## 十六、运行日志
+## 十八、运行日志
 
 ```
 qq-bot: 仓库目录 /Users/you/dsh-qq-bot，数据目录 /Users/you/dsh-qq-bot/data
@@ -335,7 +363,7 @@ qq-bot: 🤖 [千早爱音] 上下文 5行, 2图
 qq-bot: 📤 [千早爱音] 分段回复 (2段)
 ```
 
-## 十七、开发
+## 十九、开发
 
 ```bash
 node --check lib/*.js          # 语法检查
@@ -358,7 +386,7 @@ npm pack                       # 打 tarball 给别人装
 | `lib/platform.js` | 平台差异（打开目录、compose 探测、虚拟机信息） |
 | `lib/client.js` | 界面（设置分区 + 插件页配置入口） |
 
-## 十八、已知行为差异（相对原 Python 版）
+## 二十、已知行为差异（相对原 Python 版）
 
 1. **命令必须空格分隔**：`@bot /ping` 生效，`@bot/ping` 不生效。
 2. `data/*.json` 里图片以 `liveImages`（base64）内联保存，不再落 `data/images/`。
