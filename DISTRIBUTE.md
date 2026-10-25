@@ -96,7 +96,7 @@ npm view dsh-qq-bot version
 
 ## 常见问题
 
-- **对方没有 `dsh` 命令**：桌面版安装目录里通常自带 CLI；也可以让对方在 Harness 的插件页里用「从本地安装」。
+- **对方没有 `dsh` 命令**：先确认 Harness 是否装全（桌面版带 CLI）。若确实没有，界面里的插件市场只接受 npm / git 来源，那就走方式二或方式三发布后再让对方在界面里装。
 - **安装时提示 peer 依赖缺失**：本插件的 `@deepseek-ai/*` 全是 peer 依赖，由宿主提供，不要去装。
 - **升级**：把新 tgz 再 `add` 一次即可覆盖，`~/.dsh-qq-bot` 里的数据（人设、表情包、登录态）不受影响。
 - **卸载**：`dsh plugin --profile desktop remove dsh-qq-bot`（工作目录里的数据不会删）。
