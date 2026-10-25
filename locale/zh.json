@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "QQ 机器人 (dsh-qq-bot)",
+    "description": "通过 OneBot v11 (LLOneBot/NapCat) 把 QQ 群聊和私聊接入 DeepSeek Harness：持久 agent 会话、人设系统提示词、消息聚合、冷却限频、表情包、图片多模态与群内指令。"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "name": "dsh-qq-bot",
+  "version": "1.1.0",
+  "description": "QQ 群聊/私聊机器人插件（macOS / Windows 开箱即用）：通过 OneBot v11（NapCat）接入 DeepSeek Harness，自带人设、表情包、界面化 Docker 服务启停与目录管理。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib",
+    "locale",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.1.5-alpha.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": ">=1.0.0",
+    "@deepseek-ai/dsh-agent": ">=0.1.0-rc.5",
+    "@deepseek-ai/dsh-brand": ">=0.1.0-rc.5",
+    "@deepseek-ai/dsh-llm": ">=0.1.0-rc.5",
+    "@deepseek-ai/dsh-session": ">=0.1.0-rc.5",
+    "@deepseek-ai/dsh-system-prompt": ">=0.1.0-rc.5"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-locale"
+      ]
+    }
+  },
+  "dshhub": {
+    "schemaVersion": 1,
+    "displayName": "QQ 机器人 (dsh-qq-bot)",
+    "summary": "QQ 机器人：OneBot v11（NapCat）接入、持久会话、人设、表情包、界面化服务启停；macOS 与 Windows 都能用。",
+    "categories": [
+      "消息",
+      "集成"
+    ],
+    "surfaces": [
+      "host",
+      "web"
+    ],
+    "capabilities": {
+      "provides": [],
+      "requires": [
+        "service:agents",
+        "service:agentDefaultModel",
+        "service:sessions"
+      ]
+    },
+    "compatibility": {
+      "dsh": ">=0.1.5-alpha.1",
+      "node": ">=20"
+    }
+  },
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "qq",
+    "onebot",
+    "napcat",
+    "qq-bot",
+    "chatbot"
+  ],
+  "os": [
+    "darwin",
+    "win32",
+    "linux"
+  ],
+  "scripts": {
+    "check": "node --check lib/index.js && node --check lib/service.js && node --check lib/files.js && node --check lib/scaffold.js && node --check lib/platform.js && node --check lib/client.js"
+  }
+}

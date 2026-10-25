@@ -1,0 +1,6 @@
+# dsh-qq-bot bundle patch: one host row that mounts the QQ bot bridge.
+# The row name resolves from the profile's own node_modules, where
+# `dsh plugin --profile <profile> add <path-to>/dsh-plugin` installed this package.
+- insert:
+    - id: qq-bot
+      name: dsh-qq-bot

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "QQ Bot (dsh-qq-bot)",
+    "description": "Bridge QQ group/private chats into DeepSeek Harness sessions over OneBot v11 (LLOneBot/NapCat): persistent agents, persona system prompts, message aggregation, cooldowns, stickers, image input, and chat commands."
+  }
+}
