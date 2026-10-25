@@ -1,7 +1,7 @@
 {
   "name": "dsh-qq-bot",
-  "version": "1.3.2",
-  "description": "QQ 群聊/私聊机器人插件（macOS / Windows 开箱即用）：通过 OneBot v11（NapCat）接入 DeepSeek Harness，自带人设、表情包、工具白名单/联网搜索、对话巡检、规则回复、定时消息、记忆管理、ASR/TTS/生图，以及界面化 Docker 服务启停与目录管理。",
+  "version": "1.4.0",
+  "description": "QQ 群聊/私聊机器人插件（macOS / Windows 开箱即用）：通过 OneBot v11（NapCat）接入 DeepSeek Harness，自带人设、表情包、工具白名单/联网搜索、对话巡检、规则回复、定时消息、记忆管理，以及界面化 Docker 服务启停与目录管理。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -17,7 +17,7 @@
     "README.md",
     "LICENSE",
     "NOTICE",
-    "RELEASE_NOTES-v1.3.2.md"
+    "RELEASE_NOTES-v1.4.0.md"
   ],
   "engines": {
     "node": ">=20",
@@ -80,9 +80,6 @@
     "napcat",
     "qq-bot",
     "chatbot",
-    "asr",
-    "tts",
-    "image-generation",
     "web-search"
   ],
   "os": [
@@ -91,6 +88,6 @@
     "linux"
   ],
   "scripts": {
-    "check": "node --check lib/index.js && node --check lib/service.js && node --check lib/files.js && node --check lib/scaffold.js && node --check lib/platform.js && node --check lib/tools.js && node --check lib/telemetry.js && node --check lib/media.js && node --check lib/observe.js && node --check lib/schedule.js && node --check lib/hub.js && node --check lib/bot.js && node --check lib/brain.js && node --check lib/onebot.js && node --check lib/cq.js && node --check lib/client.js"
+    "check": "node --check lib/index.js && node --check lib/service.js && node --check lib/files.js && node --check lib/scaffold.js && node --check lib/platform.js && node --check lib/tools.js && node --check lib/telemetry.js && node --check lib/observe.js && node --check lib/schedule.js && node --check lib/hub.js && node --check lib/bot.js && node --check lib/brain.js && node --check lib/onebot.js && node --check lib/cq.js && node --check lib/client.js"
   }
 }

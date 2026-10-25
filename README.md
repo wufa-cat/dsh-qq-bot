@@ -25,7 +25,6 @@
 - **关键词规则**：命中直接回，不进模型
 - **定时消息**：每天/指定星期往群里发固定内容
 - **长期记忆**：直接在界面里编辑 `data/memory-<chat>.json`
-- **语音合成 / 生图**：TTS 与图片生成，全部用你自己填的 API Key（不做 ASR，用 QQ 自带的语音转文字）
 - 图片多模态、B 站/分享链接解析、群内指令（`/ping`、`/表情`、`/reload` …）
 
 ---
@@ -155,7 +154,30 @@ stickers/
 | `webSearch` | `web_search` | 联网搜索，默认 **关** |
 | `webFetch` | `web_fetch` | 抓取网页正文，默认 **关**（打开搜索后才有意义） |
 
-实现是 `ctx.tools.restrict({ allow })`：只把白名单里的工具挂在**聊天会话自己的 agent 作用域**上，不影响你在 Harness 里正常用的工具；不认识的工具名会被过滤，不会因为 `restrict` 抛错而整行挂掉。
+**1.4.0 起：插件自己注册 `web_search`（宿主全局层）**
+
+DSH 桌面版把工具搬进了「agent 预设」，而插件用 `agents.create()` 建的聊天 agent 不经过预设流程——实测那个 agent 里只有 `working_directory`，`web_search` 根本不存在，所以以前「配了搜索也没用」、模型只能自己编 `<invoke>` 语法。
+
+现在插件在宿主全局层注册一个 `web_search`（`lib/webtool.js`），检索仍走后端 `ctx.web`（凭据/provider 还是 profile 里那套），聊天 agent 自动继承；关掉 `tools.webSearch` 时用 per-agent restrict 遮掉。另用 `tools.guard()` 拒绝 `bash`/`write`/`edit`/`subagent` 这类危险工具执行。
+
+状态接口 `web.tool` 会告诉你注册结果：
+
+```json
+"web": { "available": true, "tool": { "ok": true, "reason": "已注册" } }
+```
+
+实现是 `agentCtx.tools.restrict({ allow })`（**必须**用 `agentCtx.tools`，用 `ctx.get('tools')` 会抛 "requires a scoped context"）。
+
+工具名从 `tools.view(scope).restrictableNames` 读（读不到再退回 `schemas()` / 逐个 `get`）。**读不到工具表时不会用 `allow: []` 一刀切**——那会把 `web_search` 一起屏蔽，模型就只能自己编 `<invoke>` 语法发到群里；这时改成 deny 掉危险工具（`bash`/`write`/`edit`/`subagent`…），保证联网还能用。
+
+改完后在群里发 `/搜索` 看状态，`/qqbot-status` 里每个机器人有：
+
+```json
+"tools":          { "webSearch": true, "webFetch": false },   // 配置/指令层面
+"toolsAvailable": { "webSearch": true, "webFetch": false }    // agent 里真的拿到的
+```
+
+`toolsAvailable.webSearch` 为 `true` 才算联网真的可用；为 `false` 说明 Harness 没把工具给聊天 agent（缺 `@deepseek-ai/dsh-tool-web` 或 web 服务）。
 
 界面：插件页 → 机器人卡片 → 「工具权限」。也有运行时开关：
 
@@ -175,12 +197,10 @@ stickers/
 
 ## 七、谁可以调用功能（权限）
 
-**每个功能单独设置**，不再是一个总开关。五个功能：
+**每个功能单独设置**，不再是一个总开关。三个功能：
 
 | 功能 | 管的动作 |
 | --- | --- |
-| `image` | `/画 描述`、模型自主写的 `[画图:…]` |
-| `tts` | `/语音 文本`、模型自主写的 `[语音:…]` |
 | `sticker` | `/收图`（写表情包目录） |
 | `search` | `/搜索`（切换联网） |
 | `manage` | `/ai`、`/clear`、`/reload` |
@@ -193,8 +213,6 @@ access:
   denyUsers: []        # 默认黑名单，永远优先
   denyGroups: []
   features:            # 每个功能可以覆盖默认值；mode: inherit = 跟随默认
-    image:  { mode: all }
-    tts:    { mode: list, users: ["10001"], groups: ["123456789"] }
     sticker:{ mode: admin }
     search: { mode: inherit }
     manage: { mode: admin, denyUsers: ["10002"] }
@@ -203,21 +221,10 @@ access:
 - 判定顺序：**黑名单（默认+该功能）→ 管理员 → 该功能 mode**（inherit 时用默认 mode）；
 - 名单和黑名单的条目：QQ 号，或 `群:群号`（群里任何人都算）；
 - 管理员始终可用，除非被黑名单点名；
-- 模型自主生成媒体时按**触发这一轮的人**判权限，没权限就把标记抹掉，不会把 `[画图:…]` 原文发群里。
 
 界面里就是一张表：每个功能一行，选范围、填名单（一行一个，也吃逗号）、黑名单折叠在下面。
 
-## 八、生图 / TTS 自动识别模型
-
-「多模态」卡片里，每个端点只要填了**接口地址（到 `/v1`）+ API Key**，就会**自动拉一次上游模型列表**（改 key 会防抖重拉），下拉里直接选；也可以手动点「拉取模型」。
-
-- 只查模型 id，不参与调用；模型名仍可手填（填了就用手填的）；
-- 实现是 `GET {baseURL}/models`，兼容 `data[]` / `models[]`，去重排序；
-- 对话用的聊天模型不在这里选——那是 DSH 设置里的 provider/model。
-
-对应接口：`POST /qqbot-runtime/models`，body `{ baseURL, apiKey | apiKeyEnv }`。
-
-## 九、对话巡检与状态灯
+## 八、对话巡检与状态灯
 
 插件页顶部「运行状态」：
 
@@ -232,7 +239,7 @@ access:
 
 事件只存在内存环形缓冲（400 条），重启清空；聊天记录本体仍在 `data/`。
 
-## 十、关键词规则
+## 九、关键词规则
 
 命中关键词直接回复，**不进模型**：快、省钱、不受上下文影响。
 
@@ -248,7 +255,7 @@ rules:
 - `reply` 支持 `{user}`（昵称）、`{qq}`、`{bot}`；
 - 规则优先于模型，但**指令优先于规则**（`/ping` 不会被规则抢走）。
 
-## 十一、定时消息
+## 十、定时消息
 
 ```yaml
 schedules:
@@ -265,29 +272,12 @@ schedules:
 - `{date}` `{time}` `{weekday}` 会替换；
 - 机器人不在线就跳过并记日志（不会补发）。
 
-## 十二、长期记忆
+## 十一、长期记忆
 
 「长期记忆」卡片直接编辑 `data/memory-<chat>.json`：一行一条，保存时自动补日期。
 新会话建立（种子）时会把这些摘要注入提示词；也可以整份删除。
 
-## 十三、语音合成 / 生图
-
-「多模态」卡片，两套端点各自填 **baseURL + API Key + 模型**（OpenAI 兼容）：
-
-| 能力 | 接口 | 触发 |
-| --- | --- | --- |
-| TTS | `POST /audio/speech` | `/语音 文本`，或模型回复写 `[语音:文本]` |
-| 生图 | `POST /images/generations` | `/画 描述`，或模型回复写 `[画图:描述]` |
-
-- 不做语音转文字（ASR）：QQ 自带的语音转文字已经够用，插件不再重复实现；
-- 媒体配置是**每次调用现读**的：界面里改完 key 直接生效，不用重载插件；
-- TTS 超时 45 秒，会明确告诉你「上游没返回」而不是干等；
-- Key 可直接填，也可只填**环境变量名**（`apiKeyEnv`），避免写进配置文件；
-- 默认 SiliconFlow + `CosyVoice2-0.5B` / `Kolors`，只是默认值；
-- 没启用/没配 key：`[语音]` 保留占位，`/画` `/语音` 直接报错，不静默失败；
-- 结果以 base64 内联发 NapCat，容器里也能发。
-
-## 十四、群内指令
+## 十二、群内指令
 
 | 指令 | 说明 |
 | --- | --- |
@@ -302,11 +292,9 @@ schedules:
 | `/ai on\|off\|status` | 开关 AI 回复（受 `access.features.manage` 限制） |
 | `/收图 [分类]` | 把图片收进表情包（受 `access.features.sticker` 限制） |
 | `/搜索 [on\|off\|跟随]` | 联网搜索开关（受 `access.features.search` 限制） |
-| `/画 描述` | 生图（需配置 `media.image`；受 `access.features.image` 限制） |
-| `/语音 文本` | 合成语音（需配置 `media.tts`；受 `access.features.tts` 限制） |
 | `/reload` | 重读人设与表情包（管理员） |
 
-## 十五、目录与清理
+## 十三、目录与清理
 
 「目录与清理」卡片：
 
@@ -315,7 +303,7 @@ schedules:
 - **删除虚拟机**：仅 macOS + colima 可用，回收约 3.5 GB，下次启动会重建并重新拉镜像；
   Windows 上引擎在 WSL2 里，插件**不会**动它（要彻底重置用 Docker Desktop → Troubleshoot → Reset）。
 
-## 十六、配置项（`cordis.patch.yml`）
+## 十四、配置项（`cordis.patch.yml`）
 
 界面保存的就是这些；一般不用手写。所有字段都有默认值，最小配置只需要 `bots`：
 
@@ -342,16 +330,11 @@ schedules:
           denyUsers: []
           denyGroups: []
           features:
-            image: { mode: inherit }
-            tts: { mode: inherit }
             sticker: { mode: inherit }
             search: { mode: inherit }
             manage: { mode: inherit }
     rules: []                # 关键词规则
     schedules: []            # 定时消息
-    media:                   # TTS / 生图（用你自己的 key，模型可自动识别）
-      tts: { enabled: false, baseURL: https://api.siliconflow.cn/v1, apiKey: "", model: FunAudioLLM/CosyVoice2-0.5B, voice: alex }
-      image: { enabled: false, baseURL: https://api.siliconflow.cn/v1, apiKey: "", model: Kwai-Kolors/Kolors, size: 1024x1024 }
     service:
       onebotDir: ""        # 留空 = <repoDir>/onebot/napcat-docker
       webuiPort: 6099
@@ -373,7 +356,7 @@ schedules:
 
 `provider/model` 缺省时使用 DSH 全局默认模型；指定时使用该 provider（须已在 DSH 设置里配好）。
 
-## 十七、界面背后的接口
+## 十五、界面背后的接口
 
 界面按钮打到 Harness 自带 web 服务器的两个前缀（不额外开端口）：
 
@@ -384,7 +367,7 @@ schedules:
 - `/qqbot-runtime/{search,ai}`：运行时开关（不改配置文件，重载后回到配置值）
 - `/qqbot-runtime/models`：`POST {baseURL, apiKey|apiKeyEnv}` → 上游模型 id 列表（界面「拉取模型」）
 
-## 十八、运行日志
+## 十六、运行日志
 
 ```
 qq-bot: 仓库目录 /Users/you/dsh-qq-bot，数据目录 /Users/you/dsh-qq-bot/data
@@ -396,7 +379,7 @@ qq-bot: 🤖 [千早爱音] 上下文 5行, 2图
 qq-bot: 📤 [千早爱音] 分段回复 (2段)
 ```
 
-## 十九、开发
+## 十七、开发
 
 ```bash
 node --check lib/*.js          # 语法检查
@@ -419,7 +402,7 @@ npm pack                       # 打 tarball 给别人装
 | `lib/platform.js` | 平台差异（打开目录、compose 探测、虚拟机信息） |
 | `lib/client.js` | 界面（设置分区 + 插件页配置入口） |
 
-## 二十、已知行为差异（相对原 Python 版）
+## 十八、已知行为差异（相对原 Python 版）
 
 1. **命令必须空格分隔**：`@bot /ping` 生效，`@bot/ping` 不生效。
 2. `data/*.json` 里图片以 `liveImages`（base64）内联保存，不再落 `data/images/`。
@@ -427,7 +410,7 @@ npm pack                       # 打 tarball 给别人装
 4. 一个 (bot, 聊天) 的会话在插件进程存活期间复用；DSH 重启后首轮用聊天日志窗口整体重建。
 
 
-## 二十一、排障：插件「消失」与 404
+## 十九、排障：插件「消失」与 404
 
 | 现象 | 原因 | 处理 |
 | --- | --- | --- |
@@ -435,8 +418,6 @@ npm pack                       # 打 tarball 给别人装
 | 界面卡片在，接口 404（`/qqbot-status` 等） | 页面刷新只换前端，Host 还是旧进程 | **完全退出并重启 Harness**，不是刷新页面 |
 | 状态灯红、`lastError` 有内容 | NapCat 没起来 / 端口不对 / token 不对 | 用「服务」卡片启动，或 `docker logs napcat` |
 | 搜索报 401 | 聊天模型不是 DeepSeek 账号模型，搜索仍需 DeepSeek 凭据 | 「设置 → 插件 → 官方 → 网页搜索」填 Key |
-| `/语音` 报「TTS 缺少 apiKey」 | 1.3.0 及更早：媒体配置在插件加载时被快照，界面保存的 key 要重载才生效 | 升级到 1.3.1（现读配置，保存即生效） |
-| `/语音` 报「上游 45s 没返回」 | 供应商那边卡住（模型/音色/额度） | 换模型或音色，或换供应商；生图通常正常 |
 | 群里出现 `<invoke>` / `<parameter>` 之类的文本 | 搜索开着但 agent 没拿到 `web_search`，模型自己编了调用语法 | 1.3.2 起会自动过滤并丢弃纯语法回复；看 `/qqbot-status` 的 `toolsAvailable.webSearch` 排查 |
 
 ## 致谢
