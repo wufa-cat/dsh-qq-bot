@@ -32,11 +32,28 @@ else
 fi
 
 # 2) 代码与 tag
-run git push -u origin main
+echo "-- 推送 main 与 tag（HTTPS 提示密码时请输入 Personal Access Token，不是账号密码）"
+if ! run git push -u origin main; then
+  cat >&2 <<'ERR'
+
+!! 推送失败。常见原因：
+   1. 密码处填了账号密码 —— GitHub 只接受 Personal Access Token（classic 勾 repo，
+      或 fine-grained 只勾本仓库 Contents: Read and write）
+   2. 仓库不是空的（勾了 README/license）—— 先删掉仓库重建一个空仓库
+   3. 没有推送权限 —— 确认登录的账号是仓库所有者 wufa-cat
+
+ERR
+  exit 1
+fi
 run git push origin v1.1.0
 
 # 3) 提示下一步
 OWNER="${OWNER_REPO%%/*}"
+if [ "$DRY" = 0 ]; then
+  echo "-- 远端现状："
+  git ls-remote --heads origin | sed 's/^/   /'
+fi
+
 cat <<TIP
 
 == 代码与 tag 已推送。最后一步：发 Release（网页操作）
