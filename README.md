@@ -1,5 +1,10 @@
 # dsh-qq-bot
 
+[![Release](https://img.shields.io/github/v/release/wufa-cat/dsh-qq-bot?color=2f80ed&label=release)](https://github.com/wufa-cat/dsh-qq-bot/releases)
+[![Downloads](https://img.shields.io/github/downloads/wufa-cat/dsh-qq-bot/total?color=12b76a&label=downloads)](https://github.com/wufa-cat/dsh-qq-bot/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-111111)](https://github.com/wufa-cat/dsh-qq-bot)
+[![License](https://img.shields.io/badge/license-MIT%20(for%20plugin%20code)-8b5cf6)](NOTICE)
+
 > **非官方移植**：本项目是 [QQ-bot](https://github.com/ezoiLZH/QQ-bot) 的 [DeepSeek Harness](https://dsh.deepseek.com) 插件版。
 > 原项目作者 **[ezoiLZH](https://github.com/ezoiLZH)** —— 人设协议、表情包机制、消息聚合、SKIP/LEAVE 冷却、群内指令等设计全部来自原项目，特此致谢。
 > 本项目**经原作者许可发布**；按原作者要求，任何转载或二次分发请保留本段署名与上方原项目链接。
