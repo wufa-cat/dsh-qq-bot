@@ -25,7 +25,7 @@
 - **关键词规则**：命中直接回，不进模型
 - **定时消息**：每天/指定星期往群里发固定内容
 - **长期记忆**：直接在界面里编辑 `data/memory-<chat>.json`
-- **语音转文字 / 语音合成 / 生图**：ASR/TTS/图片生成，全部用你自己填的 API Key
+- **语音合成 / 生图**：TTS 与图片生成，全部用你自己填的 API Key（不做 ASR，用 QQ 自带的语音转文字）
 - 图片多模态、B 站/分享链接解析、群内指令（`/ping`、`/表情`、`/reload` …）
 
 ---
@@ -62,9 +62,9 @@
 
 ```bash
 # 直接从 GitHub Release 装（推荐）
-dsh plugin --profile desktop add https://github.com/wufa-cat/dsh-qq-bot/releases/download/v1.2.1/dsh-qq-bot-1.2.1.tgz
+dsh plugin --profile desktop add https://github.com/wufa-cat/dsh-qq-bot/releases/download/v1.3.0/dsh-qq-bot-1.3.0.tgz
 # 或者用本地下发的 tarball / 目录
-dsh plugin --profile desktop add ./dsh-qq-bot-1.2.1.tgz
+dsh plugin --profile desktop add ./dsh-qq-bot-1.3.0.tgz
 # 或者直接用目录
 dsh plugin --profile desktop add /path/to/dsh-plugin
 # 发布到 npm 之后也可以
@@ -175,26 +175,47 @@ stickers/
 
 ## 七、谁可以调用功能（权限）
 
-`bots[].access` 管「有副作用或花钱」的动作：`/画`、`/语音`、`/收图`、`/搜索`、`/ai`、`/clear`、`/reload`，以及模型自主生成的 `[画图:…]` / `[语音:…]`。
+**每个功能单独设置**，不再是一个总开关。五个功能：
+
+| 功能 | 管的动作 |
+| --- | --- |
+| `image` | `/画 描述`、模型自主写的 `[画图:…]` |
+| `tts` | `/语音 文本`、模型自主写的 `[语音:…]` |
+| `sticker` | `/收图`（写表情包目录） |
+| `search` | `/搜索`（切换联网） |
+| `manage` | `/ai`、`/clear`、`/reload` |
 
 ```yaml
 access:
-  mode: admin              # all 全员 | admin 仅管理员 | list 仅白名单
-  users: ["10001"]         # mode=list 白名单 QQ
-  groups: ["123456789"]    # mode=list 白名单群（群里任何人都算）
-  denyUsers: []            # 黑名单永远优先
+  mode: admin          # 默认范围：all 全员 | admin 仅管理员 | list 仅白名单
+  users: []            # 默认白名单 QQ
+  groups: []           # 默认白名单群号（群里任何人都算）
+  denyUsers: []        # 默认黑名单，永远优先
   denyGroups: []
+  features:            # 每个功能可以覆盖默认值；mode: inherit = 跟随默认
+    image:  { mode: all }
+    tts:    { mode: list, users: ["10001"], groups: ["123456789"] }
+    sticker:{ mode: admin }
+    search: { mode: inherit }
+    manage: { mode: admin, denyUsers: ["10002"] }
 ```
 
-判定顺序：**黑名单 → 管理员 → mode**。管理员始终可以，但被拉黑就不行。
-`/ai`、`/clear`、`/reload` 属于管理操作，**始终**只给管理员，不受 `mode` 影响。
-模型自主生成媒体时，按「触发这一轮的人」判权限；没权限时标记会被抹掉，不会原样发出去。
+- 判定顺序：**黑名单（默认+该功能）→ 管理员 → 该功能 mode**（inherit 时用默认 mode）；
+- 名单和黑名单的条目：QQ 号，或 `群:群号`（群里任何人都算）；
+- 管理员始终可用，除非被黑名单点名；
+- 模型自主生成媒体时按**触发这一轮的人**判权限，没权限就把标记抹掉，不会把 `[画图:…]` 原文发群里。
 
-## 八、模型自动检索
+界面里就是一张表：每个功能一行，选范围、填名单（一行一个，也吃逗号）、黑名单折叠在下面。
 
-机器人卡片「模型来源（只用于拉取列表）」：填上游 OpenAI 兼容地址（到 `/v1`）+ key → **拉取模型** → 下拉选一个 → 填进「模型」。
-「多模态」卡片的 ASR / TTS / 生图也各有一个「拉取模型」按钮。
-它只查模型 id，对话调用仍走 DSH 的 provider/model。
+## 八、生图 / TTS 自动识别模型
+
+「多模态」卡片里，每个端点只要填了**接口地址（到 `/v1`）+ API Key**，就会**自动拉一次上游模型列表**（改 key 会防抖重拉），下拉里直接选；也可以手动点「拉取模型」。
+
+- 只查模型 id，不参与调用；模型名仍可手填（填了就用手填的）；
+- 实现是 `GET {baseURL}/models`，兼容 `data[]` / `models[]`，去重排序；
+- 对话用的聊天模型不在这里选——那是 DSH 设置里的 provider/model。
+
+对应接口：`POST /qqbot-runtime/models`，body `{ baseURL, apiKey | apiKeyEnv }`。
 
 ## 九、对话巡检与状态灯
 
@@ -202,7 +223,7 @@ access:
 
 - 绿/红状态灯：是否连上 OneBot、重连次数、最近错误、已运行时长；
 - 计数：收到消息 / 发出回复 / 跳过 / 错误；
-- 搜索与 AI 的当前状态，一键切换。
+- 搜索与 AI 的当前状态（只读；运行时开关用群指令 `/搜索`、`/ai`）。
 
 「对话巡检」卡片：
 
@@ -249,18 +270,18 @@ schedules:
 「长期记忆」卡片直接编辑 `data/memory-<chat>.json`：一行一条，保存时自动补日期。
 新会话建立（种子）时会把这些摘要注入提示词；也可以整份删除。
 
-## 十三、语音转文字 / 语音合成 / 生图
+## 十三、语音合成 / 生图
 
-「多模态」卡片，三套端点各自填 **baseURL + API Key + 模型**（OpenAI 兼容）：
+「多模态」卡片，两套端点各自填 **baseURL + API Key + 模型**（OpenAI 兼容）：
 
 | 能力 | 接口 | 触发 |
 | --- | --- | --- |
-| ASR | `POST /audio/transcriptions` | 群里发语音 → 自动转文字后进模型 |
 | TTS | `POST /audio/speech` | `/语音 文本`，或模型回复写 `[语音:文本]` |
 | 生图 | `POST /images/generations` | `/画 描述`，或模型回复写 `[画图:描述]` |
 
+- 不做语音转文字（ASR）：QQ 自带的语音转文字已经够用，插件不再重复实现；
 - Key 可直接填，也可只填**环境变量名**（`apiKeyEnv`），避免写进配置文件；
-- 默认 SiliconFlow + `SenseVoiceSmall` / `CosyVoice2-0.5B` / `Kolors`，只是默认值；
+- 默认 SiliconFlow + `CosyVoice2-0.5B` / `Kolors`，只是默认值；
 - 没启用/没配 key：`[语音]` 保留占位，`/画` `/语音` 直接报错，不静默失败；
 - 结果以 base64 内联发 NapCat，容器里也能发。
 
@@ -276,11 +297,11 @@ schedules:
 | `/roll` | 掷骰子 |
 | `/calc 1+2*3` | 计算 |
 | `/clear [N]` | 清除对话记忆 |
-| `/ai on\|off\|status` | 开关 AI 回复 |
-| `/收图 [分类]` | 把图片收进表情包（管理员；可带图发或回复图片） |
-| `/搜索 [on\|off]` | 联网搜索开关（管理员） |
-| `/画 描述` | 生图（需配置 `media.image`；受 `access` 限制） |
-| `/语音 文本` | 合成语音（需配置 `media.tts`；受 `access` 限制） |
+| `/ai on\|off\|status` | 开关 AI 回复（受 `access.features.manage` 限制） |
+| `/收图 [分类]` | 把图片收进表情包（受 `access.features.sticker` 限制） |
+| `/搜索 [on\|off\|跟随]` | 联网搜索开关（受 `access.features.search` 限制） |
+| `/画 描述` | 生图（需配置 `media.image`；受 `access.features.image` 限制） |
+| `/语音 文本` | 合成语音（需配置 `media.tts`；受 `access.features.tts` 限制） |
 | `/reload` | 重读人设与表情包（管理员） |
 
 ## 十五、目录与清理
@@ -312,12 +333,21 @@ schedules:
         # model: deepseek-ai/DeepSeek-V4.1-Flash
         timeout: 180
         tools: { webSearch: false, webFetch: false }   # 聊天档工具白名单
-        access: { mode: admin, users: [], groups: [], denyUsers: [], denyGroups: [] }
-        modelSource: { baseURL: "", apiKey: "" }       # 只用于界面「拉取模型」
+        access:                # 每个功能单独设；features 里的 mode=inherit 跟随默认
+          mode: admin
+          users: []
+          groups: []
+          denyUsers: []
+          denyGroups: []
+          features:
+            image: { mode: inherit }
+            tts: { mode: inherit }
+            sticker: { mode: inherit }
+            search: { mode: inherit }
+            manage: { mode: inherit }
     rules: []                # 关键词规则
     schedules: []            # 定时消息
-    media:                   # ASR / TTS / 生图（用你自己的 key）
-      asr: { enabled: false, baseURL: https://api.siliconflow.cn/v1, apiKey: "", model: FunAudioLLM/SenseVoiceSmall }
+    media:                   # TTS / 生图（用你自己的 key，模型可自动识别）
       tts: { enabled: false, baseURL: https://api.siliconflow.cn/v1, apiKey: "", model: FunAudioLLM/CosyVoice2-0.5B, voice: alex }
       image: { enabled: false, baseURL: https://api.siliconflow.cn/v1, apiKey: "", model: Kwai-Kolors/Kolors, size: 1024x1024 }
     service:
