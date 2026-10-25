@@ -2,9 +2,10 @@
 
 > **非官方移植**：本项目是 [QQ-bot](https://github.com/ezoiLZH/QQ-bot) 的 [DeepSeek Harness](https://dsh.deepseek.com) 插件版。
 > 原项目作者 **[ezoiLZH](https://github.com/ezoiLZH)** —— 人设协议、表情包机制、消息聚合、SKIP/LEAVE 冷却、群内指令等设计全部来自原项目，特此致谢。
+> 本项目**经原作者许可发布**；按原作者要求，任何转载或二次分发请保留本段署名与上方原项目链接。
 > 如果原作者希望调整署名或撤下本项目，开个 issue 即可，我会立刻处理。
 >
-> 仓库：https://github.com/wufa-anon/dsh-qq-bot · 下载：https://github.com/wufa-anon/dsh-qq-bot/releases
+> 仓库：https://github.com/wufa-cat/dsh-qq-bot · 下载：https://github.com/wufa-cat/dsh-qq-bot/releases
 
 把 QQ 变成 DeepSeek Harness 的聊天入口：OneBot v11（NapCat）收消息，Harness 的模型回消息。
 **macOS 与 Windows 都能开箱即用**——装好插件，在界面里点几下就能跑起来，不需要命令行、不需要 clone 任何仓库。
@@ -251,6 +252,8 @@ npm pack                       # 打 tarball 给别人装
 | [NapCatQQ](https://github.com/NapNeko/NapCatQQ) | 本插件默认使用的 OneBot v11 实现（Docker 镜像 `mlikiowa/napcat-docker`） |
 | [LLOneBot](https://github.com/LLOneBot/LLOneBot) | 另一种 OneBot v11 实现，同样可用 |
 | [DeepSeek Harness](https://dsh.deepseek.com) | 宿主：agent 会话、模型路由、系统提示词、插件槽位 |
+
+**出处引用**：本项目基于 [QQ-bot](https://github.com/ezoiLZH/QQ-bot)（作者 [ezoiLZH](https://github.com/ezoiLZH)）改写，经原作者许可发布；转载、二次分发请保留本段署名与链接。
 
 原项目**没有附带开源许可证**，所以本移植版不对原项目的代码与设计主张任何权利；新增的插件封装、界面与跨平台适配代码以 MIT 发布（见 `LICENSE` 与 `NOTICE`）。
 

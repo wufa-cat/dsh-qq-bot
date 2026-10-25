@@ -2,12 +2,12 @@
 # 一键把本插件推到 GitHub（仓库需要先在网页上建好：https://github.com/new → 空仓库、不要勾 README）
 #
 # 用法：
-#   ./scripts/publish-github.sh                 # 默认仓库 wufa-anon/dsh-qq-bot
+#   ./scripts/publish-github.sh                 # 默认仓库 wufa-cat/dsh-qq-bot
 #   ./scripts/publish-github.sh <owner>/<repo>  # 换仓库
 #   ./scripts/publish-github.sh --dry-run       # 只打印将要执行的命令
 set -euo pipefail
 
-OWNER_REPO="wufa-anon/dsh-qq-bot"
+OWNER_REPO="wufa-cat/dsh-qq-bot"
 DRY=0
 for arg in "$@"; do
   case "$arg" in
