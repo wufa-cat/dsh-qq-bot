@@ -1,6 +1,6 @@
 # 怎么把这个插件发给别人
 
-插件已经打成一个 npm tarball：`dist/dsh-qq-bot-1.1.0.tgz`（62 KB，sha256 见 `dist/SHA256SUMS.txt`）。
+插件已经打成一个 npm tarball：`dist/dsh-qq-bot-1.1.0.tgz`（62 KB，sha256 见 `SHA256SUMS.txt`）。
 对方需要：**已装好 DeepSeek Harness** + **Docker（Windows 用 Docker Desktop）**。
 下面是三种分发方式，从最省事到最正式。
 
@@ -100,4 +100,4 @@ npm view dsh-qq-bot version
 - **安装时提示 peer 依赖缺失**：本插件的 `@deepseek-ai/*` 全是 peer 依赖，由宿主提供，不要去装。
 - **升级**：把新 tgz 再 `add` 一次即可覆盖，`~/.dsh-qq-bot` 里的数据（人设、表情包、登录态）不受影响。
 - **卸载**：`dsh plugin --profile desktop remove dsh-qq-bot`（工作目录里的数据不会删）。
-- **校验文件**：`shasum -a 256 dsh-qq-bot-1.1.0.tgz` 应与 `dist/SHA256SUMS.txt` 一致。
+- **校验文件**：`shasum -a 256 dsh-qq-bot-1.1.0.tgz` 应与仓库根目录 `SHA256SUMS.txt` 一致。
