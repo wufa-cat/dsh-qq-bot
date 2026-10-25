@@ -1,7 +1,7 @@
 {
   "name": "dsh-qq-bot",
-  "version": "1.1.0",
-  "description": "QQ 群聊/私聊机器人插件（macOS / Windows 开箱即用）：通过 OneBot v11（NapCat）接入 DeepSeek Harness，自带人设、表情包、界面化 Docker 服务启停与目录管理。",
+  "version": "1.2.0",
+  "description": "QQ 群聊/私聊机器人插件（macOS / Windows 开箱即用）：通过 OneBot v11（NapCat）接入 DeepSeek Harness，自带人设、表情包、工具白名单/联网搜索、对话巡检、规则回复、定时消息、记忆管理、ASR/TTS/生图，以及界面化 Docker 服务启停与目录管理。",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -17,7 +17,7 @@
     "README.md",
     "LICENSE",
     "NOTICE",
-    "RELEASE_NOTES-v1.1.0.md"
+    "RELEASE_NOTES-v1.2.0.md"
   ],
   "engines": {
     "node": ">=20",
@@ -49,7 +49,7 @@
   "dshhub": {
     "schemaVersion": 1,
     "displayName": "QQ 机器人 (dsh-qq-bot)",
-    "summary": "QQ 机器人：OneBot v11（NapCat）接入、持久会话、人设、表情包、界面化服务启停；macOS 与 Windows 都能用。",
+    "summary": "QQ 机器人：OneBot v11（NapCat）接入、持久会话、人设/表情包、工具白名单与联网搜索、对话巡检、关键词规则、定时消息、记忆管理、语音转文字/合成与生图；macOS 与 Windows 都能用。",
     "categories": [
       "消息",
       "集成"
@@ -79,7 +79,11 @@
     "onebot",
     "napcat",
     "qq-bot",
-    "chatbot"
+    "chatbot",
+    "asr",
+    "tts",
+    "image-generation",
+    "web-search"
   ],
   "os": [
     "darwin",
@@ -87,6 +91,6 @@
     "linux"
   ],
   "scripts": {
-    "check": "node --check lib/index.js && node --check lib/service.js && node --check lib/files.js && node --check lib/scaffold.js && node --check lib/platform.js && node --check lib/client.js"
+    "check": "node --check lib/index.js && node --check lib/service.js && node --check lib/files.js && node --check lib/scaffold.js && node --check lib/platform.js && node --check lib/tools.js && node --check lib/telemetry.js && node --check lib/media.js && node --check lib/observe.js && node --check lib/schedule.js && node --check lib/hub.js && node --check lib/bot.js && node --check lib/brain.js && node --check lib/onebot.js && node --check lib/cq.js && node --check lib/client.js"
   }
 }

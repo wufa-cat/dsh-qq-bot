@@ -20,6 +20,12 @@
 - 人格（`persona/*.md`）在插件界面里直接编辑
 - 表情包按「机器人/分类」管理，界面里上传、删除、直接测试发送
 - NapCat（Docker）服务的启动/停止/重启、扫码登录、环境自检、目录打开全在界面里
+- **工具白名单**：聊天会话默认一个工具都不给；要联网才开 `web_search`（P0，防止群友间接拿到命令能力）
+- **对话巡检**：状态灯 + 最近事件 + 跳过原因 + 聊天记录尾巴，排障不用翻日志
+- **关键词规则**：命中直接回，不进模型
+- **定时消息**：每天/指定星期往群里发固定内容
+- **长期记忆**：直接在界面里编辑 `data/memory-<chat>.json`
+- **语音转文字 / 语音合成 / 生图**：ASR/TTS/图片生成，全部用你自己填的 API Key
 - 图片多模态、B 站/分享链接解析、群内指令（`/ping`、`/表情`、`/reload` …）
 
 ---
@@ -56,7 +62,7 @@
 
 ```bash
 # 从 tarball / 目录安装（推荐分享这种方式）
-dsh plugin --profile desktop add ./dsh-qq-bot-1.1.0.tgz
+dsh plugin --profile desktop add ./dsh-qq-bot-1.2.0.tgz
 # 或者直接用目录
 dsh plugin --profile desktop add /path/to/dsh-plugin
 # 发布到 npm 之后也可以
@@ -136,7 +142,103 @@ stickers/
 
 > 旧布局兼容：`stickers/<分类>/图片` 也能识别（当 `stickers/<机器人名字>/` 不存在时）。根目录直接放图片**不会**被发送——那些只会显示在卡片的「根目录图片」里。
 
-## 六、群内指令
+## 六、工具白名单与联网搜索（P0）
+
+群里任何人说话都可能触发模型，所以**聊天档默认不给任何工具**——不能跑命令、不能写文件、不能开子代理。
+要什么给什么，白名单写在每个机器人的 `tools` 里：
+
+| 开关 | 工具 | 说明 |
+| --- | --- | --- |
+| `webSearch` | `web_search` | 联网搜索，默认 **关** |
+| `webFetch` | `web_fetch` | 抓取网页正文，默认 **关**（打开搜索后才有意义） |
+
+实现是 `ctx.tools.restrict({ allow })`：只把白名单里的工具挂在**聊天会话自己的 agent 作用域**上，不影响你在 Harness 里正常用的工具；不认识的工具名会被过滤，不会因为 `restrict` 抛错而整行挂掉。
+
+界面：插件页 → 机器人卡片 → 「工具权限」。也有运行时开关：
+
+- `/搜索 on|off`（管理员）：下一轮重建会话时生效，`/搜索` 不带参数看当前状态；
+- 「运行状态」卡片里的 开 / 关 / 跟随配置 按钮。
+
+### 搜索凭据不是这个插件管的
+
+搜索后端是 Harness 内置的 **DeepSeek 官方搜索**（`deepseek-official`）：
+
+- 用 DeepSeek 账号登录 Harness → 自动可用；
+- 或环境变量 `DEEPSEEK_API_KEY`；
+- 或「设置 → 插件 → 官方 → 网页搜索」里填 Key。
+
+⚠️ 聊天模型如果走别的 provider（例如 SiliconFlow），搜索仍需要**单独的 DeepSeek 凭据**，否则报 401。插件界面的状态卡会直接给出这条提示。
+💰 Messages 模式搜索 = 一次完整模型调用（60s 超时、最多 5 次），开之前先想清楚值不值。
+
+## 七、对话巡检与状态灯
+
+插件页顶部「运行状态」：
+
+- 绿/红状态灯：是否连上 OneBot、重连次数、最近错误、已运行时长；
+- 计数：收到消息 / 发出回复 / 跳过 / 错误；
+- 搜索与 AI 的当前状态，一键切换。
+
+「对话巡检」卡片：
+
+- 最近 60 条事件：谁、在哪个聊天、说了什么、bot 回没回、**为什么跳过**（冷却 / 没被 @ / AI 关 / 聚合中）；
+- 下拉选一个 `data/<chat>.json` 直接看最近 20 条聊天记录。
+
+事件只存在内存环形缓冲（400 条），重启清空；聊天记录本体仍在 `data/`。
+
+## 八、关键词规则
+
+命中关键词直接回复，**不进模型**：快、省钱、不受上下文影响。
+
+```yaml
+rules:
+  - enabled: true
+    pattern: 在吗
+    mode: contains        # contains | exact | regex
+    reply: 在的 {user}
+    bots: [千早爱音]       # 留空 = 所有机器人
+```
+
+- `reply` 支持 `{user}`（昵称）、`{qq}`、`{bot}`；
+- 规则优先于模型，但**指令优先于规则**（`/ping` 不会被规则抢走）。
+
+## 九、定时消息
+
+```yaml
+schedules:
+  - enabled: true
+    label: 早安
+    at: "08:00"
+    days: [1, 2, 3, 4, 5]       # 1=周一 … 7=周日；留空 = 每天
+    bot: 千早爱音
+    chat: group:123456789       # 或 private:10001
+    text: 早上好呀～ {weekday}
+```
+
+- 每 20 秒检查一次，同一天同一分钟只发一次；
+- `{date}` `{time}` `{weekday}` 会替换；
+- 机器人不在线就跳过并记日志（不会补发）。
+
+## 十、长期记忆
+
+「长期记忆」卡片直接编辑 `data/memory-<chat>.json`：一行一条，保存时自动补日期。
+新会话建立（种子）时会把这些摘要注入提示词；也可以整份删除。
+
+## 十一、语音转文字 / 语音合成 / 生图
+
+「多模态」卡片，三套端点各自填 **baseURL + API Key + 模型**（OpenAI 兼容）：
+
+| 能力 | 接口 | 触发 |
+| --- | --- | --- |
+| ASR | `POST /audio/transcriptions` | 群里发语音 → 自动转文字后进模型 |
+| TTS | `POST /audio/speech` | `/语音 文本`，或模型回复写 `[语音:文本]` |
+| 生图 | `POST /images/generations` | `/画 描述`，或模型回复写 `[画图:描述]` |
+
+- Key 可直接填，也可只填**环境变量名**（`apiKeyEnv`），避免写进配置文件；
+- 默认 SiliconFlow + `SenseVoiceSmall` / `CosyVoice2-0.5B` / `Kolors`，只是默认值；
+- 没启用/没配 key：`[语音]` 保留占位，`/画` `/语音` 直接报错，不静默失败；
+- 结果以 base64 内联发 NapCat，容器里也能发。
+
+## 十二、群内指令
 
 | 指令 | 说明 |
 | --- | --- |
@@ -149,9 +251,13 @@ stickers/
 | `/calc 1+2*3` | 计算 |
 | `/clear [N]` | 清除对话记忆 |
 | `/ai on\|off\|status` | 开关 AI 回复 |
+| `/收图 [分类]` | 把图片收进表情包（管理员；可带图发或回复图片） |
+| `/搜索 [on\|off]` | 联网搜索开关（管理员） |
+| `/画 描述` | 生图（需配置 `media.image`） |
+| `/语音 文本` | 合成语音（需配置 `media.tts`） |
 | `/reload` | 重读人设与表情包（管理员） |
 
-## 七、目录与清理
+## 十三、目录与清理
 
 「目录与清理」卡片：
 
@@ -160,7 +266,7 @@ stickers/
 - **删除虚拟机**：仅 macOS + colima 可用，回收约 3.5 GB，下次启动会重建并重新拉镜像；
   Windows 上引擎在 WSL2 里，插件**不会**动它（要彻底重置用 Docker Desktop → Troubleshoot → Reset）。
 
-## 八、配置项（`cordis.patch.yml`）
+## 十四、配置项（`cordis.patch.yml`）
 
 界面保存的就是这些；一般不用手写。所有字段都有默认值，最小配置只需要 `bots`：
 
@@ -179,6 +285,13 @@ stickers/
         # provider: guijiliudong   # 可选：缺省用 DSH 默认模型
         # model: deepseek-ai/DeepSeek-V4.1-Flash
         timeout: 180
+        tools: { webSearch: false, webFetch: false }   # 聊天档工具白名单
+    rules: []                # 关键词规则
+    schedules: []            # 定时消息
+    media:                   # ASR / TTS / 生图（用你自己的 key）
+      asr: { enabled: false, baseURL: https://api.siliconflow.cn/v1, apiKey: "", model: FunAudioLLM/SenseVoiceSmall }
+      tts: { enabled: false, baseURL: https://api.siliconflow.cn/v1, apiKey: "", model: FunAudioLLM/CosyVoice2-0.5B, voice: alex }
+      image: { enabled: false, baseURL: https://api.siliconflow.cn/v1, apiKey: "", model: Kwai-Kolors/Kolors, size: 1024x1024 }
     service:
       onebotDir: ""        # 留空 = <repoDir>/onebot/napcat-docker
       webuiPort: 6099
@@ -200,14 +313,17 @@ stickers/
 
 `provider/model` 缺省时使用 DSH 全局默认模型；指定时使用该 provider（须已在 DSH 设置里配好）。
 
-## 九、界面背后的接口
+## 十五、界面背后的接口
 
 界面按钮打到 Harness 自带 web 服务器的两个前缀（不额外开端口）：
 
 - `/qqbot-service/*`：`status`、`doctor`（环境自检）、`init`（初始化目录）、`action`（start/stop/restart）
-- `/qqbot-files/*`：`list`、`persona/{load,save,create,delete,rename}`、`sticker/{upload,category,delete}`、`open`、`clean`
+- `/qqbot-files/*`：`list`、`persona/{load,save,create,delete,rename}`、`sticker/{upload,category,delete}`、`memory/{list,read,save,delete}`、`chats`、`chat/tail`、`open`、`clean`
+- `/qqbot-status`：状态灯数据（连接/计数/工具策略/搜索可用性）
+- `/qqbot-inspect`：巡检事件
+- `/qqbot-runtime/{search,ai}`：运行时开关（不改配置文件，重载后回到配置值）
 
-## 十、运行日志
+## 十六、运行日志
 
 ```
 qq-bot: 仓库目录 /Users/you/dsh-qq-bot，数据目录 /Users/you/dsh-qq-bot/data
@@ -219,7 +335,7 @@ qq-bot: 🤖 [千早爱音] 上下文 5行, 2图
 qq-bot: 📤 [千早爱音] 分段回复 (2段)
 ```
 
-## 十一、开发
+## 十七、开发
 
 ```bash
 node --check lib/*.js          # 语法检查
@@ -242,7 +358,7 @@ npm pack                       # 打 tarball 给别人装
 | `lib/platform.js` | 平台差异（打开目录、compose 探测、虚拟机信息） |
 | `lib/client.js` | 界面（设置分区 + 插件页配置入口） |
 
-## 十二、已知行为差异（相对原 Python 版）
+## 十八、已知行为差异（相对原 Python 版）
 
 1. **命令必须空格分隔**：`@bot /ping` 生效，`@bot/ping` 不生效。
 2. `data/*.json` 里图片以 `liveImages`（base64）内联保存，不再落 `data/images/`。
