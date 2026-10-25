@@ -72,6 +72,7 @@ dsh plugin --profile desktop add dsh-qq-bot
 ```
 
 > `--profile desktop` 是桌面版专用 profile；Web 版改成 `--profile web`。
+> 目录软链安装（`add /path/to/dsh-plugin`）不会安装插件的依赖，v1.2.2 起已自动回退到 Node 内置 WebSocket，不需要额外处理。
 
 安装完**完全退出并重启 Harness**（Cmd+Q / 托盘退出），让 Host 侧代码生效。
 
@@ -392,6 +393,16 @@ npm pack                       # 打 tarball 给别人装
 2. `data/*.json` 里图片以 `liveImages`（base64）内联保存，不再落 `data/images/`。
 3. compact 后的记忆总结不再自动生成；已有 `memory-<chat>.json` 会继续注入种子文本。
 4. 一个 (bot, 聊天) 的会话在插件进程存活期间复用；DSH 重启后首轮用聊天日志窗口整体重建。
+
+
+## 二十一、排障：插件「消失」与 404
+
+| 现象 | 原因 | 处理 |
+| --- | --- | --- |
+| 设置侧栏没有「QQ 机器人」、插件页也无此项 | Host 侧 `apply()`/import 失败（最常见：软链安装缺依赖） | 看启动日志的 `failed to import`；v1.2.2 起软链安装已自动回退内置 WebSocket |
+| 界面卡片在，接口 404（`/qqbot-status` 等） | 页面刷新只换前端，Host 还是旧进程 | **完全退出并重启 Harness**，不是刷新页面 |
+| 状态灯红、`lastError` 有内容 | NapCat 没起来 / 端口不对 / token 不对 | 用「服务」卡片启动，或 `docker logs napcat` |
+| 搜索报 401 | 聊天模型不是 DeepSeek 账号模型，搜索仍需 DeepSeek 凭据 | 「设置 → 插件 → 官方 → 网页搜索」填 Key |
 
 ## 致谢
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-qq-bot",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "QQ 群聊/私聊机器人插件（macOS / Windows 开箱即用）：通过 OneBot v11（NapCat）接入 DeepSeek Harness，自带人设、表情包、工具白名单/联网搜索、对话巡检、规则回复、定时消息、记忆管理、ASR/TTS/生图，以及界面化 Docker 服务启停与目录管理。",
   "type": "module",
   "main": "lib/index.js",
@@ -17,7 +17,7 @@
     "README.md",
     "LICENSE",
     "NOTICE",
-    "RELEASE_NOTES-v1.2.1.md"
+    "RELEASE_NOTES-v1.2.2.md"
   ],
   "engines": {
     "node": ">=20",
