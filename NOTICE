@@ -1,0 +1,28 @@
+dsh-qq-bot — QQ-bot 的 DeepSeek Harness 移植版
+================================================
+
+本项目是 QQ-bot 的非官方移植/改写版本：
+
+    原项目： QQ-bot
+    仓库：   https://github.com/ezoiLZH/QQ-bot
+    作者：   ezoiLZH
+
+原项目使用 Python + Claude Code CLI 实现；本项目把它改写为 DeepSeek Harness
+的 cordis 插件（Host + Web 两侧），并新增了界面化的配置、人格/表情包管理、
+Docker/NapCat 服务启停与 macOS/Windows 跨平台适配。
+
+版权说明
+--------
+1. 原项目（QQ-bot）的代码、文档与设计版权归原作者 ezoiLZH 所有。
+2. 原仓库未附带开源许可证。因此本移植版不因移植行为对原项目主张任何权利，
+   也不以此仓库重新许可原项目的任何部分。
+3. 本仓库新增的插件封装代码（lib/、界面、跨平台适配、初始化脚手架等）
+   以 MIT 许可证发布，详见 LICENSE。
+4. 如果原作者对本项目的署名方式、发布形式有任何异议，请联系维护者，
+   我们会在第一时间调整或撤下。
+
+第三方组件
+----------
+- NapCatQQ / napcat-docker：https://github.com/NapNeko/NapCatQQ
+- LLOneBot：https://github.com/LLOneBot/LLOneBot
+- DeepSeek Harness：https://dsh.deepseek.com

@@ -15,7 +15,9 @@
     "locale",
     "cordis.patch.yml",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE",
+    "RELEASE_NOTES-v1.1.0.md"
   ],
   "engines": {
     "node": ">=20",
