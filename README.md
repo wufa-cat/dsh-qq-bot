@@ -62,9 +62,9 @@
 
 ```bash
 # 直接从 GitHub Release 装（推荐）
-dsh plugin --profile desktop add https://github.com/wufa-cat/dsh-qq-bot/releases/download/v1.3.0/dsh-qq-bot-1.3.0.tgz
+dsh plugin --profile desktop add https://github.com/wufa-cat/dsh-qq-bot/releases/download/v1.3.2/dsh-qq-bot-1.3.2.tgz
 # 或者用本地下发的 tarball / 目录
-dsh plugin --profile desktop add ./dsh-qq-bot-1.3.0.tgz
+dsh plugin --profile desktop add ./dsh-qq-bot-1.3.2.tgz
 # 或者直接用目录
 dsh plugin --profile desktop add /path/to/dsh-plugin
 # 发布到 npm 之后也可以
@@ -437,6 +437,7 @@ npm pack                       # 打 tarball 给别人装
 | 搜索报 401 | 聊天模型不是 DeepSeek 账号模型，搜索仍需 DeepSeek 凭据 | 「设置 → 插件 → 官方 → 网页搜索」填 Key |
 | `/语音` 报「TTS 缺少 apiKey」 | 1.3.0 及更早：媒体配置在插件加载时被快照，界面保存的 key 要重载才生效 | 升级到 1.3.1（现读配置，保存即生效） |
 | `/语音` 报「上游 45s 没返回」 | 供应商那边卡住（模型/音色/额度） | 换模型或音色，或换供应商；生图通常正常 |
+| 群里出现 `<invoke>` / `<parameter>` 之类的文本 | 搜索开着但 agent 没拿到 `web_search`，模型自己编了调用语法 | 1.3.2 起会自动过滤并丢弃纯语法回复；看 `/qqbot-status` 的 `toolsAvailable.webSearch` 排查 |
 
 ## 致谢
 

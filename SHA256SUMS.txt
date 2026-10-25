@@ -1,1 +1,1 @@
-d3665fe849ab5c8bb8c494a432d6cd6dc357ec65ec78aa2168a4ca5f49ad5e53  dsh-qq-bot-1.3.1.tgz
+78be6483ecd77643719a43cdde2da4652470092bdad39d1a3ac9b07f89ddbe4d  dsh-qq-bot-1.3.2.tgz
