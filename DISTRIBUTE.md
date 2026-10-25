@@ -1,6 +1,6 @@
 # 怎么把这个插件发给别人
 
-插件已经打成一个 npm tarball：`dist/dsh-qq-bot-1.2.0.tgz`（88 KB，sha256 见 `SHA256SUMS.txt`）。
+插件已经打成一个 npm tarball：`dist/dsh-qq-bot-1.2.0.tgz`（90 KB，sha256 见 `SHA256SUMS.txt`）。
 对方需要：**已装好 DeepSeek Harness** + **Docker（Windows 用 Docker Desktop）**。
 下面是三种分发方式，从最省事到最正式。
 
